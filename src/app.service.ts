@@ -17,4 +17,16 @@ export class AppService {
   }): Promise<UserEntity> {
     return await this.userRepository.save(data);
   }
+
+  async login(email: string): Promise<UserEntity> {
+    return await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+  }
+
+  async findOneById(id: any): Promise<UserEntity> {
+    return await this.userRepository.findOne({ where: id });
+  }
 }
