@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './entities/users.entity';
 import { dataOptions } from './data-source';
-import { JwtModule } from '@nestjs/jwt';
+import { UserEntity } from './user/entities/user.entity';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -13,13 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
       entities: [UserEntity],
       synchronize: false,
     }),
-    TypeOrmModule.forFeature([UserEntity]),
-    JwtModule.register({
-      secret: 'secret',
-      signOptions: { expiresIn: '1d' },
-    }),
+    UserModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
