@@ -18,15 +18,13 @@ export class UserService {
     return await this.userRepository.save(data);
   }
 
-  async login(email: string): Promise<UserEntity> {
-    return await this.userRepository.findOne({
-      where: {
-        email: email,
-      },
-    });
+  async findOne(condition): Promise<UserEntity> {
+    return await this.userRepository.findOne(condition);
   }
 
-  async findOneById(id: any): Promise<UserEntity> {
-    return await this.userRepository.findOne({ where: id });
+  async find(): Promise<UserEntity[]> {
+    return await this.userRepository.find({
+      select: ['id', 'name', 'email'],
+    });
   }
 }

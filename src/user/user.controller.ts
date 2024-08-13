@@ -1,17 +1,17 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
   Get,
   Post,
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
+import { JwtGuard } from 'src/auth/auth-guards/jwt.guard';
 import { UserService } from './user.service';
+import { UserEntity } from './entities/user.entity';
 
 @Controller('user')
 export class UserController {
@@ -20,63 +20,29 @@ export class UserController {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Post('register')
-  async registerUser(
-    @Body('name') name: string,
-    @Body('email') email: string,
-    @Body('password') password: string,
-  ) {
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = await this.userService.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    delete user.password;
-    return user;
-  }
-
-  @Post('login')
-  async loginUser(
-    @Body('email') email: string,
-    @Body('password') password: string,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const user = await this.userService.login(email);
-
-    if (!user) {
-      throw new BadRequestException('Invalid credentials');
-    }
-
-    if (!(await bcrypt.compare(password, user.password))) {
-      throw new BadRequestException('Invalid credentials');
-    }
-
-    const jwt = await this.jwtService.signAsync({ id: user.id });
-    response.cookie('jwt', jwt, { httpOnly: true });
-    return {
-      massage: 'Success',
-    };
-  }
-
   @Get()
+  @UseGuards(JwtGuard)
   async user(@Req() request: Request) {
     try {
       const cookie = request.cookies['jwt'];
-
       const data = await this.jwtService.verifyAsync(cookie);
-
-      if (!data) {
-        throw new UnauthorizedException();
-      }
-
-      const user = await this.userService.findOneById({ id: data['id'] });
+      if (!data) throw new UnauthorizedException();
+      const condition = {
+        where: { id: data['id'] },
+      };
+      const user = await this.userService.findOne(condition);
       delete user.password;
       return user;
     } catch (e) {
       throw new UnauthorizedException();
     }
+  }
+
+  @Get('users')
+  @UseGuards(JwtGuard)
+  async users(): Promise<UserEntity[]> {
+    const users = await this.userService.find();
+    return users;
   }
 
   @Post('logout')
